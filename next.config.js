@@ -9,3 +9,10 @@ module.exports = {
       NEXT_PUBLIC_FIREBASE_APP_ID: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
     }
   };
+
+  module.exports = {
+    webpack: (config) => {
+      config.resolve.fallback = { fs: false };
+      return config;
+    },
+  };
