@@ -1,4 +1,4 @@
-import { collection, addDoc, getDocs, query, where } from 'firebase/firestore';
+import { collection, addDoc, getDocs } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
 export const registerVote = async (voteData) => {
@@ -14,31 +14,35 @@ export const registerVote = async (voteData) => {
 };
 
 export const getElectionResults = async () => {
-  const votesSnapshot = await getDocs(collection(db, 'votes'));
-  const candidatesSnapshot = await getDocs(collection(db, 'candidates'));
-  
-  const candidates = candidatesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  const votes = votesSnapshot.docs.map(doc => doc.data());
-  
-  const results = {};
-  candidates.forEach(candidate => {
-    results[candidate.id] = {
-      ...candidate,
-      votes: votes.filter(vote => vote.candidateId === candidate.id).length
+  try {
+    const votesSnapshot = await getDocs(collection(db, 'votes'));
+    const candidatesSnapshot = await getDocs(collection(db, 'candidates'));
+    
+    const candidates = candidatesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const votes = votesSnapshot.docs.map(doc => doc.data());
+    
+    const results = {};
+    candidates.forEach(candidate => {
+      results[candidate.id] = {
+        ...candidate,
+        votes: votes.filter(vote => vote.candidateId === candidate.id).length
+      };
+    });
+    
+    results['blank'] = {
+      name: 'Voto em Branco',
+      votes: votes.filter(vote => vote.candidateId === 'blank').length
     };
-  });
-  
-  results['blank'] = {
-    name: 'Voto em Branco',
-    votes: votes.filter(vote => vote.candidateId === 'blank').length
-  };
-  
-  results['null'] = {
-    name: 'Voto Nulo',
-    votes: votes.filter(vote => vote.candidateId === 'null').length
-  };
-  
-  return results;
+    
+    results['null'] = {
+      name: 'Voto Nulo',
+      votes: votes.filter(vote => vote.candidateId === 'null').length
+    };
+    
+    return results;
+  } catch (error) {
+    return { success: false, error };
+  }
 };
 
 export const resetElection = async () => {
