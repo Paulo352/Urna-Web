@@ -1,10 +1,8 @@
 import { collection, addDoc, getDocs, doc, updateDoc, query, where } from 'firebase/firestore';
 import { db } from '../config/firebase';
-import { getAllVoters } from '../../services/voters';
 
 export const registerVoter = async (voterData) => {
   try {
-    // Verifica se o eleitor já existe
     const q = query(collection(db, 'voters'), where('matricula', '==', voterData.matricula));
     const snapshot = await getDocs(q);
     
@@ -33,7 +31,10 @@ export const getVoterByMatricula = async (matricula) => {
 };
 
 export const markVoterAsVoted = async (voterId) => {
-  await updateDoc(doc(db, 'voters', voterId), { hasVoted: true, votedAt: new Date().toISOString() });
+  await updateDoc(doc(db, 'voters', voterId), { 
+    hasVoted: true, 
+    votedAt: new Date().toISOString() 
+  });
 };
 
 export const getAllVoters = async () => {

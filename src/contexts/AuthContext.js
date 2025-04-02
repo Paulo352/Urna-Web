@@ -37,7 +37,6 @@ export function AuthProvider({ children }) {
   const hasRole = (requiredRole) => {
     if (!currentUser) return false;
     
-    // Hierarquia de permissões
     const roleHierarchy = {
       'admin': ['admin', 'mesario', 'eleitor'],
       'mesario': ['mesario', 'eleitor'],

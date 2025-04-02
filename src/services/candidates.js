@@ -15,6 +15,13 @@ export const getCandidates = async () => {
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 };
 
+export const getCandidatesByPosition = async (position) => {
+  const snapshot = await getDocs(collection(db, 'candidates'));
+  return snapshot.docs
+    .map(doc => ({ id: doc.id, ...doc.data() }))
+    .filter(candidate => candidate.position === position);
+};
+
 export const updateCandidate = async (id, candidateData) => {
   await updateDoc(doc(db, 'candidates', id), candidateData);
 };

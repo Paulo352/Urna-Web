@@ -1,36 +1,39 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { registerVote } from '../services/elections';
-import { getCandidates } from '../services/candidates';
+import { getCandidatesByPosition } from '../services/candidates';
+import { getVoterByMatricula, markVoterAsVoted } from '../services/voters';
+import { toast } from 'react-hot-toast';
 
-export default function BallotBox() {
-  const { currentUser, hasRole } = useAuth();
+const BallotBox = () => {
   const [input, setInput] = useState('');
   const [matricula, setMatricula] = useState('');
   const [candidates, setCandidates] = useState([]);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
+  const [currentPosition, setCurrentPosition] = useState('Presidente');
   const [message, setMessage] = useState('');
 
-  // Carrega candidatos
   useEffect(() => {
     const loadCandidates = async () => {
-      const data = await getCandidates();
+      const data = await getCandidatesByPosition(currentPosition);
       setCandidates(data);
     };
     loadCandidates();
-  }, []);
+  }, [currentPosition]);
 
   const handleNumberClick = (number) => {
     if (input.length < 2) {
-      setInput(input + number);
-      checkCandidate(input + number);
-    }
-  };
-
-  const checkCandidate = (number) => {
-    if (number.length === 2) {
-      const candidate = candidates.find(c => c.number === number);
-      setSelectedCandidate(candidate || { number, name: 'Nulo', party: '' });
+      const newInput = input + number;
+      setInput(newInput);
+      
+      if (newInput.length === 2) {
+        const candidate = candidates.find(c => c.number === newInput);
+        setSelectedCandidate(candidate || { 
+          number: newInput, 
+          name: 'Nulo', 
+          position: currentPosition 
+        });
+      }
     }
   };
 
@@ -40,24 +43,32 @@ export default function BallotBox() {
       return;
     }
 
-    if (!input && !selectedCandidate) {
-      setMessage('Selecione um candidato ou vote em branco');
+    const voter = await getVoterByMatricula(matricula);
+    if (!voter) {
+      setMessage('Eleitor não cadastrado');
+      return;
+    }
+
+    if (voter.hasVoted) {
+      setMessage('Este eleitor já votou');
       return;
     }
 
     const voteData = {
-      candidateId: selectedCandidate ? selectedCandidate.id : 'blank',
+      candidateId: selectedCandidate?.id || 'blank',
       matricula,
-      position: selectedCandidate?.position || 'Presidente'
+      position: currentPosition
     };
 
     const result = await registerVote(voteData);
     
     if (result.success) {
-      setMessage('Voto registrado com sucesso!');
+      await markVoterAsVoted(voter.id);
+      toast.success('Voto registrado com sucesso!');
       setInput('');
       setSelectedCandidate(null);
       setMatricula('');
+      setMessage('');
     } else {
       setMessage(result.error || 'Erro ao registrar voto');
     }
@@ -67,16 +78,29 @@ export default function BallotBox() {
     <div className="ballot-box">
       <h2>Urna Eletrônica</h2>
       
-      {!currentUser && (
-        <div className="voter-auth">
-          <input
-            type="text"
-            placeholder="Número de Matrícula"
-            value={matricula}
-            onChange={(e) => setMatricula(e.target.value)}
-          />
-        </div>
-      )}
+      <div className="position-selector">
+        <select 
+          value={currentPosition} 
+          onChange={(e) => {
+            setCurrentPosition(e.target.value);
+            setInput('');
+            setSelectedCandidate(null);
+          }}
+        >
+          <option value="Presidente">Presidente</option>
+          <option value="Governador">Governador</option>
+          <option value="Senador">Senador</option>
+        </select>
+      </div>
+
+      <div className="voter-auth">
+        <input
+          type="text"
+          placeholder="Número de Matrícula"
+          value={matricula}
+          onChange={(e) => setMatricula(e.target.value)}
+        />
+      </div>
 
       <div className="display">
         <input type="text" value={input} readOnly />
@@ -84,9 +108,9 @@ export default function BallotBox() {
 
       {selectedCandidate && (
         <div className="candidate-info">
-          <h3>{selectedCandidate.position || 'Presidente'}</h3>
+          <h3>{selectedCandidate.position}</h3>
           <p>{selectedCandidate.number} - {selectedCandidate.name}</p>
-          <p>{selectedCandidate.party}</p>
+          {selectedCandidate.party && <p>{selectedCandidate.party}</p>}
         </div>
       )}
 
@@ -99,7 +123,10 @@ export default function BallotBox() {
         <button onClick={() => { setInput(''); setSelectedCandidate(null); }}>
           CORRIGE
         </button>
-        <button onClick={() => { setInput(''); setSelectedCandidate({ name: 'Voto em Branco' }); }}>
+        <button onClick={() => { 
+          setInput(''); 
+          setSelectedCandidate({ name: 'Voto em Branco', position: currentPosition });
+        }}>
           BRANCO
         </button>
       </div>
@@ -111,4 +138,6 @@ export default function BallotBox() {
       {message && <div className="message">{message}</div>}
     </div>
   );
-}
+};
+
+export default BallotBox;
