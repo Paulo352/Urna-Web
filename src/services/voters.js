@@ -1,5 +1,6 @@
 import { collection, addDoc, getDocs, doc, updateDoc, query, where } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import { getAllVoters } from '../../services/voters';
 
 export const registerVoter = async (voterData) => {
   try {
