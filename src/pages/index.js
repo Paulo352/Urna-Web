@@ -1,7 +1,7 @@
 import { useAuth } from '../contexts/AuthContext';
 import BallotBox from '../components/BallotBox';
 import AdminPanel from '../components/AdminPanel';
-import Login from '../components/Login';
+import login from '../components/Login';
 
 export default function Home() {
   const { currentUser, hasRole } = useAuth();
