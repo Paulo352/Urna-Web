@@ -1,0 +1,11 @@
+{
+  "/_app": "pages/_app.js",
+  "/_error": "pages/_error.js",
+  "/admin/candidates": "pages/admin/candidates.js",
+  "/admin/voters": "pages/admin/voters.js",
+  "/auth/login": "pages/auth/login.js",
+  "/voting": "pages/voting.js",
+  "/admin/dashboard": "pages/admin/dashboard.js",
+  "/": "pages/index.js",
+  "/_document": "pages/_document.js"
+}
